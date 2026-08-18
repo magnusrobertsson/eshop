@@ -68,6 +68,10 @@ namespace eShop.Identity.API.Services
             if (!string.IsNullOrWhiteSpace(user.LastName))
                 claims.Add(new Claim("last_name", user.LastName));
 
+            // To be removed
+            if (!string.IsNullOrWhiteSpace(user.CardNumber))
+                claims.Add(new Claim("card_number", user.CardNumber));
+
             if (!string.IsNullOrWhiteSpace(user.CardHolderName))
                 claims.Add(new Claim("card_holder", user.CardHolderName));
 
