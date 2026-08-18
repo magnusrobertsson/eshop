@@ -1,5 +1,6 @@
 namespace eShop.Identity.API.Services
 {
+    // Implementation
     public class ProfileService : IProfileService
     {
         private readonly UserManager<ApplicationUser> _userManager;
