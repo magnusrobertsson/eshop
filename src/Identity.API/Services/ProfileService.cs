@@ -1,9 +1,10 @@
-﻿namespace eShop.Identity.API.Services
+namespace eShop.Identity.API.Services
 {
     public class ProfileService : IProfileService
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
+        // Implementation
         public ProfileService(UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
@@ -67,17 +68,12 @@
             if (!string.IsNullOrWhiteSpace(user.LastName))
                 claims.Add(new Claim("last_name", user.LastName));
 
+            // To be removed
             if (!string.IsNullOrWhiteSpace(user.CardNumber))
                 claims.Add(new Claim("card_number", user.CardNumber));
 
             if (!string.IsNullOrWhiteSpace(user.CardHolderName))
                 claims.Add(new Claim("card_holder", user.CardHolderName));
-
-            if (!string.IsNullOrWhiteSpace(user.SecurityNumber))
-                claims.Add(new Claim("card_security_number", user.SecurityNumber));
-
-            if (!string.IsNullOrWhiteSpace(user.Expiration))
-                claims.Add(new Claim("card_expiration", user.Expiration));
 
             if (!string.IsNullOrWhiteSpace(user.City))
                 claims.Add(new Claim("address_city", user.City));
