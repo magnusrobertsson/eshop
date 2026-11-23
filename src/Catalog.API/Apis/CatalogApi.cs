@@ -255,31 +255,17 @@ public static class CatalogApi
     public static async Task<Results<FileStreamHttpResult, NotFound>> GetItemPictureById(
         CatalogContext context,
         [FromKeyedServices("pics")] IFileProvider pictureFileProvider,
-        IWebHostEnvironment environment,
-        [Description("The catalog item id")] int id,
-        [Description("Optional override of the picture file to serve")] string? file = null)
+        [Description("The catalog item id")] int id)
     {
-        string pictureFileName;
+        var item = await context.CatalogItems.FindAsync(id);
 
-        // Allow callers to request a specific asset by name (e.g. alternate renditions)
-        if (!string.IsNullOrEmpty(file))
+        if (item?.PictureFileName is not { } pictureFileName)
         {
-            pictureFileName = file;
-        }
-        else
-        {
-            var item = await context.CatalogItems.FindAsync(id);
-
-            if (item?.PictureFileName is not { } dbFileName)
-            {
-                return TypedResults.NotFound();
-            }
-
-            pictureFileName = dbFileName;
+            return TypedResults.NotFound();
         }
 
-        var picsPath = Path.Combine(environment.ContentRootPath, "Pics", pictureFileName);
-        if (!File.Exists(picsPath))
+        var picture = pictureFileProvider.GetFileInfo(pictureFileName);
+        if (!picture.Exists)
         {
             return TypedResults.NotFound();
         }
@@ -287,7 +273,7 @@ public static class CatalogApi
         string imageFileExtension = Path.GetExtension(pictureFileName) ?? string.Empty;
         string mimetype = GetImageMimeTypeFromImageFileExtension(imageFileExtension);
 
-        return TypedResults.File(File.OpenRead(picsPath), mimetype);
+        return TypedResults.File(picture.CreateReadStream(), mimetype, lastModified: picture.LastModified);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
