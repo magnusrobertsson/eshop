@@ -17,11 +17,25 @@ var withApiVersioning = builder.Services.AddApiVersioning(options =>
 
 builder.AddDefaultOpenApi(withApiVersioning);
 
+// Allow browser-based clients (web storefront + mobile web) to call the catalog API directly.
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
 app.UseStatusCodePages();
+
+app.UseCors();
 
 app.MapCatalogApi();
 
