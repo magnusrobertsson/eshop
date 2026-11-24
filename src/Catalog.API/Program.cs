@@ -17,15 +17,23 @@ var withApiVersioning = builder.Services.AddApiVersioning(options =>
 
 builder.AddDefaultOpenApi(withApiVersioning);
 
-// Allow browser-based clients (web storefront + mobile web) to call the catalog API directly.
+// JWT bearer authentication (enabled when the "Identity" configuration section exists).
+builder.AddDefaultAuthentication();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(CatalogAuthorization.ManagerPolicy, policy => policy
+        .RequireAuthenticatedUser()
+        .RequireClaim("role", CatalogAuthorization.ManagerRole));
+
+// Allow only the configured browser origins (Cors:AllowedOrigins) to call the catalog API.
+// Credentials are not allowed: clients authenticate with bearer tokens, not cookies.
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowAnyMethod();
     });
 });
 
@@ -36,6 +44,9 @@ app.MapDefaultEndpoints();
 app.UseStatusCodePages();
 
 app.UseCors();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapCatalogApi();
 

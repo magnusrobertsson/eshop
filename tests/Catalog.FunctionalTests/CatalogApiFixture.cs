@@ -3,7 +3,10 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
@@ -34,6 +37,17 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
                 });
         });
         return base.CreateHost(builder);
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        // Replace JWT validation with a test scheme that authenticates requests carrying the test header.
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddAuthentication(TestAuthHandler.SchemeName)
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+        });
+        base.ConfigureWebHost(builder);
     }
 
     public new async Task DisposeAsync()

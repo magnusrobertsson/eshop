@@ -20,10 +20,32 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         _webApplicationFactory = fixture;
     }
 
-    private HttpClient CreateHttpClient(ApiVersion apiVersion)
+    private HttpClient CreateHttpClient(ApiVersion apiVersion, string? role = "catalog-manager")
     {
         var handler = new ApiVersionHandler(new QueryStringApiVersionWriter(), apiVersion);
-        return _webApplicationFactory.CreateDefaultClient(handler);
+        var client = _webApplicationFactory.CreateDefaultClient(handler);
+        if (role is not null)
+        {
+            client.DefaultRequestHeaders.Add(TestAuthHandler.RoleHeader, role);
+        }
+        return client;
+    }
+
+    [Theory]
+    [InlineData(null, HttpStatusCode.Unauthorized)]
+    [InlineData("customer", HttpStatusCode.Forbidden)]
+    public async Task WriteEndpointsRejectCallersWithoutCatalogManagerRole(string? role, HttpStatusCode expected)
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0), role);
+        var ct = TestContext.Current.CancellationToken;
+
+        var put = await client.PutAsJsonAsync("/api/catalog/items/1", new { }, ct);
+        var post = await client.PostAsJsonAsync("/api/catalog/items", new { }, ct);
+        var delete = await client.DeleteAsync("/api/catalog/items/1", ct);
+
+        Assert.Equal(expected, put.StatusCode);
+        Assert.Equal(expected, post.StatusCode);
+        Assert.Equal(expected, delete.StatusCode);
     }
 
     [Theory]
