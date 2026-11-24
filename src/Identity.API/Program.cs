@@ -11,7 +11,15 @@ builder.AddNpgsqlDbContext<ApplicationDbContext>("identitydb");
 // migrations instead.
 builder.Services.AddMigration<ApplicationDbContext, UsersSeed>();
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    // Relax password requirements to simplify account creation during sign-up.
+    options.Password.RequiredLength = 4;
+    options.Password.RequireDigit = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+})
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
