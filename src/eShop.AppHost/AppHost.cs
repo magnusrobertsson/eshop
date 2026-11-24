@@ -36,7 +36,9 @@ redis.WithParentRelationship(basketApi);
 
 var catalogApi = builder.AddDotnetProject("catalog-api", "../Catalog.API")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
-    .WithReference(catalogDb);
+    .WithReference(catalogDb)
+    .WithEnvironment("Identity__Url", identityEndpoint)
+    .WithEnvironment("Identity__Audience", "catalog");
 
 var orderingApi = builder.AddDotnetProject("ordering-api", "../Ordering.API")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
