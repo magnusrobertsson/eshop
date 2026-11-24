@@ -259,6 +259,19 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
     }
 
     [Theory]
+    [InlineData("..%2Fappsettings.json")]
+    [InlineData("..%5Cappsettings.json")]
+    [InlineData("%2Fetc%2Fpasswd")]
+    public async Task GetCatalogItemPicRejectsPathTraversal(string file)
+    {
+        var _httpClient = CreateHttpClient(new ApiVersion(1.0));
+
+        var response = await _httpClient.GetAsync($"api/catalog/items/1/pic?file={file}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Theory]
     [InlineData(1.0)]
     [InlineData(2.0)]
     public async Task GetCatalogItemPicWithId(double version)

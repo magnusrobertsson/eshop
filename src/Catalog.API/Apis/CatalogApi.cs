@@ -282,8 +282,18 @@ public static class CatalogApi
             pictureFileName = dbFileName;
         }
 
-        var picsPath = Path.Combine(environment.ContentRootPath, "Pics", pictureFileName);
-        if (!File.Exists(picsPath))
+        // Only a bare file name is allowed: no directory separators, no rooted paths, no traversal.
+        if (pictureFileName != Path.GetFileName(pictureFileName)
+            || pictureFileName is "." or ".."
+            || pictureFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var picsDirectory = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "Pics"));
+        var picsPath = Path.GetFullPath(Path.Combine(picsDirectory, pictureFileName));
+        if (!picsPath.StartsWith(picsDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            || !File.Exists(picsPath))
         {
             return TypedResults.NotFound();
         }
