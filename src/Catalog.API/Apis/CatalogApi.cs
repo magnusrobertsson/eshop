@@ -298,8 +298,14 @@ public static class CatalogApi
             return TypedResults.NotFound();
         }
 
-        string imageFileExtension = Path.GetExtension(pictureFileName) ?? string.Empty;
+        string imageFileExtension = (Path.GetExtension(pictureFileName) ?? string.Empty).ToLowerInvariant();
         string mimetype = GetImageMimeTypeFromImageFileExtension(imageFileExtension);
+
+        // Only serve known image types; reject everything else before opening the file.
+        if (mimetype == "application/octet-stream")
+        {
+            return TypedResults.NotFound();
+        }
 
         return TypedResults.File(File.OpenRead(picsPath), mimetype);
     }
