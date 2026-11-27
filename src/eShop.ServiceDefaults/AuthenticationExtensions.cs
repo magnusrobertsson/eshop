@@ -46,13 +46,9 @@ public static class AuthenticationExtensions
             options.TokenValidationParameters.ValidIssuers = [identityUrl];
 #endif
             
-            options.TokenValidationParameters.ValidateAudience = false;
-
-            // Accept locally minted tokens without having to configure signing keys
-            // by skipping JWT signature verification.
-            options.TokenValidationParameters.ValidateIssuerSigningKey = false;
-            options.TokenValidationParameters.SignatureValidator =
-                (token, parameters) => new JsonWebToken(token);
+            // Signing keys are fetched from the authority's metadata; signatures are always verified.
+            options.TokenValidationParameters.ValidateAudience = true;
+            options.TokenValidationParameters.ValidateIssuerSigningKey = true;
         });
 
         services.AddAuthorization();
