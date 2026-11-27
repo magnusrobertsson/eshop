@@ -49,6 +49,11 @@ public static class CatalogApi
             .WithSummary("Get catalog item picture")
             .WithDescription("Get the picture for a catalog item")
             .WithTags("Items");
+        api.MapGet("/items/pic/{*fileName}", GetItemPictureByFileName)
+            .WithName("GetItemPictureByFileName")
+            .WithSummary("Get catalog item picture by file name")
+            .WithDescription("Get a catalog picture file directly by its file name.")
+            .WithTags("Items");
 
         api.MapGet("/items/facets", GetCatalogFacets)
             .WithName("GetCatalogFacets")
@@ -271,6 +276,24 @@ public static class CatalogApi
         string mimetype = GetImageMimeTypeFromImageFileExtension(imageFileExtension);
 
         return TypedResults.File(picture.CreateReadStream(), mimetype, lastModified: picture.LastModified);
+    }
+
+    public static Results<FileStreamHttpResult, NotFound> GetItemPictureByFileName(
+        IWebHostEnvironment environment,
+        [Description("The picture file name")] string fileName)
+    {
+        // Serve the requested picture straight from the Pics folder.
+        var path = Path.Combine(environment.ContentRootPath, "Pics", fileName);
+
+        if (!File.Exists(path))
+        {
+            return TypedResults.NotFound();
+        }
+
+        string imageFileExtension = Path.GetExtension(fileName) ?? string.Empty;
+        string mimetype = GetImageMimeTypeFromImageFileExtension(imageFileExtension);
+
+        return TypedResults.File(File.OpenRead(path), mimetype);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
