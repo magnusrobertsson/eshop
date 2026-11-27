@@ -278,14 +278,26 @@ public static class CatalogApi
         return TypedResults.File(picture.CreateReadStream(), mimetype, lastModified: picture.LastModified);
     }
 
+    private static readonly HashSet<string> AllowedPictureExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+
     public static Results<FileStreamHttpResult, NotFound> GetItemPictureByFileName(
         IWebHostEnvironment environment,
         [Description("The picture file name")] string fileName)
     {
-        // Serve the requested picture straight from the Pics folder.
-        var path = Path.Combine(environment.ContentRootPath, "Pics", fileName);
+        // Only serve image files, and only directly from the Pics folder.
+        if (string.IsNullOrEmpty(fileName)
+            || fileName.IndexOfAny(['/', '\\', '\0']) >= 0
+            || fileName.Contains("..", StringComparison.Ordinal)
+            || !AllowedPictureExtensions.Contains(Path.GetExtension(fileName)))
+        {
+            return TypedResults.NotFound();
+        }
 
-        if (!File.Exists(path))
+        var picsRoot = Path.GetFullPath(Path.Combine(environment.ContentRootPath, "Pics"));
+        var path = Path.GetFullPath(Path.Combine(picsRoot, fileName));
+
+        if (!path.StartsWith(picsRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal) || !File.Exists(path))
         {
             return TypedResults.NotFound();
         }
