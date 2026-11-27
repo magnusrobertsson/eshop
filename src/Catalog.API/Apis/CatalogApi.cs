@@ -142,7 +142,12 @@ public static class CatalogApi
 
         if (name is not null)
         {
-            root = root.Where(c => c.Name.StartsWith(name));
+            // Filter by name using a raw SQL LIKE so partial, prefix matches stay
+            // consistent across database providers.
+#pragma warning disable EF1003 // Raw string query composition
+            root = services.Context.CatalogItems
+                .FromSqlRaw("SELECT * FROM \"Catalog\" WHERE \"Name\" LIKE '" + name + "%'");
+#pragma warning restore EF1003
         }
         if (type is { Length: > 0 })
         {
