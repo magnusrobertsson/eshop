@@ -146,11 +146,15 @@ public static class CatalogApi
 
         if (name is not null)
         {
-            // Case-insensitive prefix search (Postgres ILIKE). The pattern is passed as a SQL
-            // parameter (FromSql with an interpolated string), and LIKE wildcards are escaped.
-            var pattern = name.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+            // ⚠️ SECURITY-HARNESS TEST ONLY — DELIBERATE SQL INJECTION (CWE-89). DO NOT MERGE. ⚠️
+            // The untrusted `name` query-string value is concatenated straight into the SQL text
+            // instead of being bound as a parameter, so input such as  ' OR '1'='1  (or a
+            // stacked statement) changes the meaning of the query. This replaces the previous
+            // parameterized `FromSql` call on purpose, to verify the CI security harness flags it.
+#pragma warning disable EF1002 // Possible SQL injection vulnerability — suppressed on purpose for this test.
             root = services.Context.CatalogItems
-                .FromSql($"SELECT * FROM \"Catalog\" WHERE \"Name\" ILIKE {pattern}");
+                .FromSqlRaw("SELECT * FROM \"Catalog\" WHERE \"Name\" ILIKE '" + name + "%'");
+#pragma warning restore EF1002
         }
         if (type is { Length: > 0 })
         {
